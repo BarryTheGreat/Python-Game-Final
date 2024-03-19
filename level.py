@@ -1,15 +1,13 @@
 import pygame, sys 
 from pygame.math import Vector2 as vector
-
 from settings import *
 from support import *
-
 from sprites import Generic, Block, Animated, Particle, Coin, Player, Spikes, Tooth, Shell, Cloud
-
 from random import choice, randint
 
 class Level:
 	def __init__(self, grid, switch, asset_dict, audio):
+		# Initialize the Level object
 		self.display_surface = pygame.display.get_surface()
 		self.switch = switch
 
@@ -20,22 +18,23 @@ class Level:
 		self.collision_sprites = pygame.sprite.Group()
 		self.shell_sprites = pygame.sprite.Group()
 
+		# Build the level
 		self.build_level(grid, asset_dict, audio['jump'])
 
-		# level limits
+		# Set the level limits
 		self.level_limits = {
 		'left': -WINDOW_WIDTH,
 		'right': sorted(list(grid['terrain'].keys()), key = lambda pos: pos[0])[-1][0] + 500
 		}
 
-		# additional stuff
+		# Additional stuff
 		self.particle_surfs = asset_dict['particle']
 		self.cloud_surfs = asset_dict['clouds']
 		self.cloud_timer = pygame.USEREVENT + 2
 		pygame.time.set_timer(self.cloud_timer, 2000)
 		self.startup_clouds()
 
-		# sounds 
+		# Sounds
 		self.bg_music = audio['music']
 		self.bg_music.set_volume(0.4)
 		self.bg_music.play(loops = -1)
@@ -47,6 +46,7 @@ class Level:
 		self.hit_sound.set_volume(0.3)
 
 	def build_level(self, grid, asset_dict, jump_sound):
+		# Build the level based on the grid
 		for layer_name, layer in grid.items():
 			for pos, data in layer.items():
 				if layer_name == 'terrain':
@@ -111,18 +111,21 @@ class Level:
 			sprite.player = self.player
 
 	def get_coins(self):
+		# Get the coins that the player has collided with
 		collided_coins = pygame.sprite.spritecollide(self.player, self.coin_sprites, True)
 		for sprite in collided_coins:
 			self.coin_sound.play()
 			Particle(self.particle_surfs, sprite.rect.center, self.all_sprites)
 
 	def get_damage(self):
+		# Check for collision with damage sprites
 		collision_sprites = pygame.sprite.spritecollide(self.player, self.damage_sprites, False, pygame.sprite.collide_mask)
 		if collision_sprites:
 			self.hit_sound.play()
 			self.player.damage()
 
 	def event_loop(self):
+		# Handle events
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				pygame.quit()
@@ -139,6 +142,7 @@ class Level:
 				Cloud((x,y), surf, self.all_sprites, self.level_limits['left'])
 
 	def startup_clouds(self):
+		# Create clouds at the start of the level
 		for i in range(40):
 			surf = choice(self.cloud_surfs)
 			surf = pygame.transform.scale2x(surf) if randint(0,5) > 3 else surf
@@ -147,30 +151,33 @@ class Level:
 			Cloud((x,y), surf, self.all_sprites, self.level_limits['left'])
 
 	def run(self, dt):
-		# update
+		# Run the level
+		# Update
 		self.event_loop()
 		self.all_sprites.update(dt)
 		self.get_coins()
 		self.get_damage()
 
-		# drawing
+		# Drawing
 		self.display_surface.fill(SKY_COLOR)
 		self.all_sprites.custom_draw(self.player)
 
 class CameraGroup(pygame.sprite.Group):
 	def __init__(self):
+		# Initialize the CameraGroup object
 		super().__init__()
 		self.display_surface = pygame.display.get_surface()
 		self.offset = vector()
 
 	def draw_horizon(self):
+		# Draw the horizon line and sea
 		horizon_pos = self.horizon_y - self.offset.y	
 
 		if horizon_pos < WINDOW_HEIGHT:
 			sea_rect = pygame.Rect(0,horizon_pos,WINDOW_WIDTH,WINDOW_HEIGHT - horizon_pos)
 			pygame.draw.rect(self.display_surface, SEA_COLOR, sea_rect)
 
-			# horizon line 
+			# Horizon line 
 			# 3 extra rectangles 
 			horizon_rect1 = pygame.Rect(0,horizon_pos - 10,WINDOW_WIDTH,10)
 			horizon_rect2 = pygame.Rect(0,horizon_pos - 16,WINDOW_WIDTH,4)
@@ -184,6 +191,7 @@ class CameraGroup(pygame.sprite.Group):
 			self.display_surface.fill(SEA_COLOR)
 
 	def custom_draw(self, player):
+		# Draw the sprites with offset based on player position
 		self.offset.x = player.rect.centerx - WINDOW_WIDTH / 2
 		self.offset.y = player.rect.centery - WINDOW_HEIGHT / 2
 

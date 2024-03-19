@@ -2,12 +2,9 @@ import pygame
 from pygame.math import Vector2 as vector
 from settings import *
 from support import *
-
 from pygame.image import load
-
 from editor import Editor
 from level import Level
-
 from os import walk
 
 class Main:
@@ -62,11 +59,13 @@ class Main:
 		}
 
 	def toggle(self):
+		# Called in Transition.display()
 		self.editor_active = not self.editor_active
 		if self.editor_active:
 			self.editor.editor_music.play()
 
 	def switch(self, grid = None):
+		# Called in Editor.switch()
 		self.transition.active = True
 		if grid:
 			self.level = Level(
@@ -113,6 +112,7 @@ class Transition:
 		self.threshold = self.radius + 100
 
 	def display(self, dt):
+		# Called in Main.run()
 		if self.active:
 			self.border_width += 1000 * dt * self.direction
 			if self.border_width >= self.threshold:
@@ -127,4 +127,4 @@ class Transition:
 
 if __name__ == '__main__':
 	main = Main()
-	main.run() 
+	main.run()
